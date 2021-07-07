@@ -102,32 +102,57 @@ const addEmployee = () => [
         name: 'lastName',
         type: 'input',
         message: "What is the Employee's last name?"
-    },
-    {
-        name: 'role',
-        type: 'input',
-        message: "What is the ID for this employee's role?"
-    },
-    {
-        name: 'manager',
-        type: 'input',
-        message: "What is the ID for this employee's manager?"
+    // },
+    // {
+
+    // },
+    // {
+    //     name: 'manager',
+    //     type: 'input',
+    //     message: "What is the ID for this employee's manager?"
     }])
-    .then((answer) =>
-        connection.query(
-            'INSERT INTO employee SET ?',
-            {
-                first_name: answer.firstName,
-                last_name: answer.lastName,
-                role_id: answer.role,
-                manager_id: answer.manager
-            }, 
-            (err) => {
-                if (err) throw err;
-                console.log('Your new employee was added');
-                openPrompt();
-            }
-        )
+    .then((answer) =>{
+        let firstName = answer.firstName;
+        let lastName = answer.lastName;
+        let roleInfo;
+
+        connection.query('SELECT * FROM role', (err, results) => {
+            if (err) throw err;
+            const roles = results.map(x => `${x.id} ${x.title}`);
+            
+            inquirer.prompt([{
+                name: 'role',
+                type: 'list',
+                choices: roles,
+                message: "What is the ID for this employee's role?"
+            }]).then(answer => {
+                let roleId = answer.role.split(" ")[0];
+                console.log(roleId);
+
+                connection.query('SELECT * FROM employee', (err, results) => {
+                    if (err) throw err;
+                    const managers = results.map(x => `${x.id} ${x.first_name} ${x.last_name}`);
+
+                })
+            })
+        })
+
+
+    }
+        // connection.query(
+        //     'INSERT INTO employee SET ?',
+        //     {
+        //         first_name: answer.firstName,
+        //         last_name: answer.lastName,
+        //         role_id: answer.role,
+        //         manager_id: answer.manager
+        //     }, 
+        //     (err) => {
+        //         if (err) throw err;
+        //         console.log('Your new employee was added');
+        //         openPrompt();
+        //     }
+        // )
     )
 ]
 
@@ -142,26 +167,46 @@ const addRole = () => [
         name: 'salary',
         type: 'input',
         message: "What is the salary of this role?"
-    },
-    {
-        name: 'dept',
-        type: 'input',
-        message: "What department is this role associated with?"
+
     }])
-    .then((answer) =>
-        connection.query(
-            'INSERT INTO role SET ?',
-            {
-                title: answer.title,
-                salary: answer.salary,
-                department_id: answer.dept
-            }, 
-            (err) => {
-                if (err) throw err;
-                console.log('Your new role was added');
-                openPrompt();
-            }
+    .then((answer) =>{
+        let roleTitle = answer.title;
+        let roleSalary = answer.salary;
+        let deptInfo;
+        connection.query('SELECT * FROM department', (err, results) => {
+            if (err) throw err;
+            deptInfo = results;
+            const depts = deptInfo.map(x => `${x.id} ${x.name}`);
+
+            inquirer.prompt([{
+                name: 'dept',
+                type: 'list',
+                choices: depts,
+                message: "What department is this role associated with?"
+            }]).then(result => {
+                let deptId = result.dept.split(" ")[0];
+                // console.log(deptId);
+
+                connection.query(
+                    'INSERT INTO role SET ?',
+                    {
+                        title: roleTitle,
+                        salary: roleSalary,
+                        department_id: deptId
+                    }, 
+                    (err) => {
+                        if (err) throw err;
+                        console.log('Your new role was added');
+                        openPrompt();
+                    }
+                )
+            })
+        }
+
         )
+
+    }
+
     )
 ]
 
@@ -191,6 +236,7 @@ const updateRole = () => {
             
             connection.query('SELECT id, title FROM role',
                 (err, results) => {
+                    if(err) throw err;
                    roleInfo = results;
                    const roles = roleInfo.map(x => `${x.id} ${x.title}`);
         
@@ -202,7 +248,7 @@ const updateRole = () => {
                       message: "Which role would you like to pick?"
                 }]).then(function(result){
                
-                    let roleId = roleInfo.filter(x => x.title == result.role.split(" ")[1]);
+                    let roleId = roleInfo.filter(x => x.id == result.role.split(" ")[0]);
                     roleId = roleId[0].id;
                     // console.log(roleId);
 
