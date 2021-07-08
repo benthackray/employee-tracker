@@ -5,14 +5,8 @@ require('dotenv').config();
 
 const connection = mysql.createConnection({
     host: 'localhost',
-  
-    // Your port; if not 3306
     port: 3306,
-  
-    // Your username
     user: 'root',
-  
-    // Be sure to update with your own MySQL password!
     password: process.env.DB_PASS,
     database: 'employeeDB',
 });
@@ -84,7 +78,7 @@ const addDept = () => [
             {name: answer.dept}, 
             (err) => {
                 if (err) throw err;
-                console.log('Your new department was added');
+                console.log('Your new department was added!');
                 openPrompt();
             }
         )
@@ -102,19 +96,10 @@ const addEmployee = () => [
         name: 'lastName',
         type: 'input',
         message: "What is the Employee's last name?"
-    // },
-    // {
-
-    // },
-    // {
-    //     name: 'manager',
-    //     type: 'input',
-    //     message: "What is the ID for this employee's manager?"
     }])
     .then((answer) =>{
         let firstName = answer.firstName;
         let lastName = answer.lastName;
-        let roleInfo;
 
         connection.query('SELECT * FROM role', (err, results) => {
             if (err) throw err;
@@ -127,7 +112,7 @@ const addEmployee = () => [
                 message: "What is the ID for this employee's role?"
             }]).then(answer => {
                 let roleId = answer.role.split(" ")[0];
-                console.log(roleId);
+                
 
                 connection.query('SELECT * FROM employee', (err, results) => {
                     if (err) throw err;
@@ -140,7 +125,18 @@ const addEmployee = () => [
                         message: "Who will be this employee's manager?"
                     }]).then(answer => {
                         let managerId = answer.manager.split(" ")[0];
-                        console.log(managerId);
+                        connection.query('INSERT INTO employee SET ?', 
+                        {
+                            first_name: firstName,
+                            last_name: lastName,
+                            role_id: roleId,
+                            manager_id: managerId
+                        },
+                        (err) => {if (err) throw err;
+                        console.log('Your new employee was added!');
+                        openPrompt();
+                        }
+                        )
                     })
 
                 })
@@ -149,20 +145,6 @@ const addEmployee = () => [
 
 
     }
-        // connection.query(
-        //     'INSERT INTO employee SET ?',
-        //     {
-        //         first_name: answer.firstName,
-        //         last_name: answer.lastName,
-        //         role_id: answer.role,
-        //         manager_id: answer.manager
-        //     }, 
-        //     (err) => {
-        //         if (err) throw err;
-        //         console.log('Your new employee was added');
-        //         openPrompt();
-        //     }
-        // )
     )
 ]
 
@@ -206,7 +188,7 @@ const addRole = () => [
                     }, 
                     (err) => {
                         if (err) throw err;
-                        console.log('Your new role was added');
+                        console.log('Your new role was added!');
                         openPrompt();
                     }
                 )
@@ -241,8 +223,6 @@ const updateRole = () => {
         
             let employeeId = employeeInfo.filter(x => x.id == result.name.split(" ")[0]);
             employeeId = employeeId[0].id;
-            // console.log(employeeId);
-
             
             connection.query('SELECT id, title FROM role',
                 (err, results) => {
@@ -260,7 +240,6 @@ const updateRole = () => {
                
                     let roleId = roleInfo.filter(x => x.id == result.role.split(" ")[0]);
                     roleId = roleId[0].id;
-                    // console.log(roleId);
 
                     connection.query('UPDATE employee SET ? WHERE ?',
                     [
@@ -291,6 +270,5 @@ const updateRole = () => {
 connection.connect((err) => {
     if (err) throw err;
     console.log(`connected as id ${connection.threadId}`);
-    // connection.end();
     openPrompt();
   });
