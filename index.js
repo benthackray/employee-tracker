@@ -133,6 +133,16 @@ const addEmployee = () => [
                     if (err) throw err;
                     const managers = results.map(x => `${x.id} ${x.first_name} ${x.last_name}`);
 
+                    inquirer.prompt([{
+                        name: 'manager',
+                        type: 'list',
+                        choices: managers,
+                        message: "Who will be this employee's manager?"
+                    }]).then(answer => {
+                        let managerId = answer.manager.split(" ")[0];
+                        console.log(managerId);
+                    })
+
                 })
             })
         })
